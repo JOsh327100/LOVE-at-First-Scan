@@ -221,7 +221,16 @@ canvas {
       <li>Let the system find a partner.</li>
       <li>View your love result 💕</li>
     </ol>
-    <button onclick="startApp()">Proceed to Scan</button>
+    <button onclick="showCameraConfirm()">Proceed to Camera Access</button>
+  </div>
+</div>
+
+<!-- CAMERA CONFIRMATION MODAL -->
+<div id="cameraConfirmModal" class="modal hidden">
+  <div class="modal-content">
+    <h2>📷 Camera Access Confirmation</h2>
+    <p>We need access to your camera to scan faces. Please confirm to proceed.</p>
+    <button onclick="confirmCamera()">Allow Camera Access</button>
   </div>
 </div>
 
@@ -281,8 +290,17 @@ function openGuide() {
   music.play();
 }
 
-async function startApp() {
+function showCameraConfirm() {
   guideModal.classList.add("hidden");
+  cameraConfirmModal.classList.remove("hidden");
+}
+
+async function confirmCamera() {
+  cameraConfirmModal.classList.add("hidden");
+  await startApp();
+}
+
+async function startApp() {
   scanArea.classList.remove("hidden");
   music.play();
   await loadModels();
