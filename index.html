@@ -225,6 +225,14 @@ canvas {
   </div>
 </div>
 
+<!-- BLOCKED DEVICE MODAL -->
+<div id="blockedModal" class="modal hidden">
+  <div class="modal-content">
+    <h2>🚫 Access Restricted</h2>
+    <p>This app is only available on tablets and iPads. Please use a compatible device.</p>
+  </div>
+</div>
+
 <!-- MAIN APP -->
 <div id="scanArea" class="hidden">
   <p id="status">Initializing camera...</p>
@@ -253,6 +261,7 @@ const music = document.getElementById("bgMusic");
 let userCaptured = false;
 let resultShown = false;
 let intervalId;
+let userFaceImage = null;
 
 const quotes = [
   "Love begins with a smile 💖",
@@ -261,6 +270,20 @@ const quotes = [
   "Love found its way 💘",
   "A perfect match in the moment 💞"
 ];
+
+function isPhone() {
+  const ua = navigator.userAgent;
+  if (ua.indexOf('iPad') > -1) return false;
+  if (ua.indexOf('Tablet') > -1) return false;
+  return /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || window.innerWidth < 768;
+}
+
+window.addEventListener('load', () => {
+  if (isPhone()) {
+    instructionModal.classList.add('hidden');
+    blockedModal.classList.remove('hidden');
+  }
+});
 
 function openGuide() {
   instructionModal.classList.add("hidden");
@@ -310,6 +333,10 @@ video.addEventListener("play", () => {
 
       if (i === 0 && !userCaptured) {
         userCaptured = true;
+        // Capture user's face image
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        userFaceImage = canvas.toDataURL('image/png');
         statusText.textContent = "Face captured. Scanning surroundings...";
       }
 
