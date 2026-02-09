@@ -238,16 +238,17 @@ canvas {
   <p id="status">Initializing camera...</p>
 
   <div class="container">
-    <video id="video" autoplay muted></video>
+    <video id="video" autoplay muted playsinline></video>
     <canvas id="overlay"></canvas>
+  </div>
+
+  <div class="app-footer">
+    <button id="captureBtn" onclick="captureUserFace()">📸 Capture My Face</button>
+    <button onclick="resetScan()">🔄 Reset Scan</button>
   </div>
 
   <p id="result"></p>
   <p id="quote"></p>
-
-  <div class="app-footer">
-    <button onclick="resetScan()">🔄 Reset Scan</button>
-  </div>
 </div>
 
 <script>
@@ -262,6 +263,7 @@ let userCaptured = false;
 let resultShown = false;
 let intervalId;
 let userFaceImage = null;
+let scanningForMatch = false;
 
 const quotes = [
   "Love begins with a smile 💖",
@@ -376,10 +378,28 @@ function playBeep() {
 function resetScan() {
   userCaptured = false;
   resultShown = false;
+  scanningForMatch = false;
   video.classList.remove('locked');
   resultText.textContent = "";
   quoteText.textContent = "";
   statusText.textContent = "Scanning your face...";
+  // Show capture button
+  document.getElementById('captureBtn').style.display = 'inline-block';
+}
+
+function captureUserFace() {
+  // Capture user's face image
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  userFaceImage = canvas.toDataURL('image/png');
+  // Add green lock frame and beep
+  video.classList.add('locked');
+  playBeep();
+  statusText.textContent = "Face captured. Scanning surroundings...";
+  // Start scanning for match
+  scanningForMatch = true;
+  // Hide capture button
+  document.getElementById('captureBtn').style.display = 'none';
 }
 </script>
 
