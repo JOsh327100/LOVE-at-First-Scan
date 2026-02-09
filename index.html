@@ -1,112 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>❤️ LOVE at First Scan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script defer src="https://unpkg.com/face-api.js"></script>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: black;
+  color: white;
+  text-align: center;
+}
+
+h1 {
+  margin: 10px;
+  color: #ff4e8a;
+}
+
+.container {
+  position: relative;
+  width: 95%;
+  max-width: 420px;
+  margin: auto;
+}
+
+video, canvas {
+  width: 100%;
+  border-radius: 20px;
+}
+
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* 🔲 SCANNING LINE */
+.scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(0,255,255,0.8);
+  animation: scan 2s linear infinite;
+}
+
+@keyframes scan {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
+#status {
+  margin-top: 10px;
+  font-size: 16px;
+}
+
+#result {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+#quote {
+  font-style: italic;
+}
+
+button {
+  margin-top: 10px;
+  padding: 10px 25px;
+  border-radius: 20px;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h1>❤️ LOVE at First Scan</h1>
+
+<!-- 🔔 BEEP SOUND -->
+<audio id="beep">
+  <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_9c2e1fa3b4.mp3" type="audio/mpeg">
+</audio>
+
+<div class="container">
+  <video id="video" autoplay muted playsinline></video>
+  <canvas id="overlay"></canvas>
+  <div class="scan-line" id="scanLine"></div>
+</div>
+
+<p id="status">Align your face within the frame</p>
+<p id="result"></p>
+<p id="quote"></p>
+<button onclick="resetScan()">🔄 Reset Scan</button>
+
 <script>
 const video = document.getElementById("video");
 const canvas = document.getElementById("overlay");
+const ctx = canvas.getContext("2d");
 const statusText = document.getElementById("status");
 const resultText = document.getElementById("result");
 const quoteText = document.getElementById("quote");
-const music = document.getElementById("bgMusic");
+const beep = document.getElementById("beep");
+const scanLine = document.getElementById("scanLine");
 
-let userCaptured = false;
-let resultShown = false;
-let scanInterval = null;
+let userLocked = false;
+let matched = false;
+let frozen = false;
+let modelsReady = false;
 
 const quotes = [
-  "Love begins with a smile 💖",
-  "Two hearts, one connection 💕",
-  "Destiny just scanned you ✨",
-  "Love found its way 💘",
-  "A perfect match in the moment 💞"
+  "Love begins the moment you smile 💖",
+  "Two hearts aligned 💕",
+  "Destiny detected ✨",
+  "Connection confirmed 💘",
+  "Love successfully scanned 💞"
 ];
 
-function isPhone() {
-  return /Android|iPhone|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
-}
+/* 🚀 START CAMERA INSTANTLY */
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+.then(stream => video.srcObject = stream)
+.catch(() => statusText.textContent = "Camera blocked");
 
-window.addEventListener("load", () => {
-  if (isPhone()) {
-    instructionModal.classList.add("hidden");
-    blockedModal.classList.remove("hidden");
-  }
-});
-
-function openGuide() {
-  instructionModal.classList.add("hidden");
-  guideModal.classList.remove("hidden");
-  music.play().catch(()=>{});
-}
-
-function startApp() {
-  guideModal.classList.add("hidden");
-  scanArea.classList.remove("hidden");
-  music.play().catch(()=>{});
-  loadModels();
-}
-
-function loadModels() {
-  faceapi.nets.tinyFaceDetector
-    .loadFromUri("https://unpkg.com/face-api.js/models")
-    .then(startCamera);
-}
-
-function startCamera() {
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-    .then(stream => {
-      video.srcObject = stream;
-    })
-    .catch(() => {
-      statusText.textContent = "Camera access denied.";
-    });
-}
+/* ⚡ LOAD MODEL IN BACKGROUND */
+faceapi.nets.tinyFaceDetector
+.loadFromUri("https://unpkg.com/face-api.js/models")
+.then(() => modelsReady = true);
 
 video.addEventListener("loadedmetadata", () => {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
 });
 
-video.addEventListener("play", () => {
-  if (scanInterval) clearInterval(scanInterval);
+video.addEventListener("play", () => scanLoop());
 
-  scanInterval = setInterval(async () => {
-    const detections = await faceapi.detectAllFaces(
-      video,
-      new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 })
-    );
+async function scanLoop() {
+  if (!modelsReady || frozen) {
+    requestAnimationFrame(scanLoop);
+    return;
+  }
 
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const detections = await faceapi.detectAllFaces(
+    video,
+    new faceapi.TinyFaceDetectorOptions({ inputSize: 224 })
+  );
 
-    if (detections.length === 0) {
-      statusText.textContent = "Scanning your face...";
-      return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (detections.length >= 1) {
+    const box = detections[0].box;
+
+    /* 🟩 GREEN LOCK FRAME */
+    ctx.strokeStyle = userLocked ? "#00ff00" : "#00ffff";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+    if (!userLocked) {
+      userLocked = true;
+      statusText.textContent = "Face locked. Scanning for match...";
     }
+  }
 
-    // FIRST FACE = USER
-    if (detections.length >= 1) {
-      const box = detections[0].box;
-      ctx.strokeStyle = "#00ffcc";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(box.x, box.y, box.width, box.height);
+  if (detections.length >= 2 && userLocked && !matched) {
+    matched = true;
+    frozen = true;
+    scanLine.style.display = "none";
+    beep.play();
+    statusText.textContent = "Match found!";
+    animateResult();
+  }
 
-      if (!userCaptured) {
-        userCaptured = true;
-        statusText.textContent = "Face captured. Scanning surroundings...";
-      }
-    }
+  requestAnimationFrame(scanLoop);
+}
 
-    // SECOND FACE = PARTNER
-    if (detections.length >= 2 && userCaptured && !resultShown) {
-      const box = detections[1].box;
-      ctx.strokeStyle = "#ffcc00";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-      resultShown = true;
-      statusText.textContent = "Match found!";
-      animateResult();
-    }
-  }, 400);
-});
-
+/* 💯 ANIMATED RESULT */
 function animateResult() {
   let target = Math.floor(Math.random() * 41) + 60;
   let count = 0;
@@ -116,14 +188,20 @@ function animateResult() {
     resultText.textContent = `💖 ${count}% Connected`;
     if (count >= target) clearInterval(timer);
     count++;
-  }, 30);
+  }, 25);
 }
 
+/* 🔄 RESET */
 function resetScan() {
-  userCaptured = false;
-  resultShown = false;
+  userLocked = false;
+  matched = false;
+  frozen = false;
   resultText.textContent = "";
   quoteText.textContent = "";
-  statusText.textContent = "Scanning your face...";
+  statusText.textContent = "Align your face within the frame";
+  scanLine.style.display = "block";
 }
 </script>
+
+</body>
+</html>
