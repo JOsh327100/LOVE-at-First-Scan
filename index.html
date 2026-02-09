@@ -307,6 +307,8 @@ video.addEventListener("play", () => {
   canvas.height = video.videoHeight;
 
   intervalId = setInterval(async () => {
+    if (!scanningForMatch) return; // Only scan after user captures their face
+
     const detections = await faceapi.detectAllFaces(
       video,
       new faceapi.TinyFaceDetectorOptions()
@@ -317,30 +319,19 @@ video.addEventListener("play", () => {
 
     detections.forEach((det, i) => {
       const box = det.box;
-      ctx.strokeStyle = i === 0 ? "#00ffcc" : "#ffcc00";
+      ctx.strokeStyle = "#ffcc00"; // Yellow for potential matches
       ctx.lineWidth = 3;
       ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-      if (i === 0 && !userCaptured) {
-        userCaptured = true;
-        // Capture user's face image
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        userFaceImage = canvas.toDataURL('image/png');
-        // Add green lock frame and beep
-        video.classList.add('locked');
-        playBeep();
-        statusText.textContent = "Face captured. Scanning surroundings...";
-      }
-
-      if (i === 1 && userCaptured && !resultShown) {
-        resultShown = true;
-        // Freeze frame on match
-        clearInterval(intervalId);
-        statusText.textContent = "Match found!";
-        animateResult();
-      }
     });
+
+    // If we detect more than one face after capture, it's a match
+    if (detections.length > 1 && !resultShown) {
+      resultShown = true;
+      // Freeze frame on match
+      clearInterval(intervalId);
+      statusText.textContent = "Match found!";
+      animateResult();
+    }
   }, 500);
 });
 
@@ -388,18 +379,30 @@ function resetScan() {
 }
 
 function captureUserFace() {
+  // Ensure video is ready
+  if (video.videoWidth === 0 || video.videoHeight === 0) {
+    statusText.textContent = "Camera not ready. Please wait...";
+    return;
+  }
+
   // Capture user's face image
   const ctx = canvas.getContext("2d");
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
   userFaceImage = canvas.toDataURL('image/png');
+
   // Add green lock frame and beep
   video.classList.add('locked');
   playBeep();
   statusText.textContent = "Face captured. Scanning surroundings...";
+
   // Start scanning for match
   scanningForMatch = true;
+  userCaptured = true;
+
   // Hide capture button
   document.getElementById('captureBtn').style.display = 'none';
+
+  console.log('Face captured successfully');
 }
 </script>
 
