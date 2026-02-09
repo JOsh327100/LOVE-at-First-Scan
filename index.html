@@ -281,36 +281,41 @@ function openGuide() {
   music.play();
 }
 
-function startApp() {
+async function startApp() {
   guideModal.classList.add("hidden");
   scanArea.classList.remove("hidden");
   music.play();
-  loadModels();
+  await loadModels();
   startCamera('user'); // Start with front camera for user face
 }
 
 function loadModels() {
-  Promise.all([
+  return Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri("https://unpkg.com/face-api.js/models")
-  ]).then(() => {
-    // Models loaded, camera will be started in startApp
-  });
+  ]);
 }
 
-function startCamera(facingMode = 'user') {
-  const constraints = {
-    video: {
-      facingMode: facingMode
-    }
-  };
+function startCamera(facingMode = null) {
+  let constraints = { video: true };
+  if (facingMode) {
+    constraints.video = { facingMode: facingMode };
+  }
   navigator.mediaDevices.getUserMedia(constraints)
     .then(stream => {
       video.srcObject = stream;
+      return video.play();
+    })
+    .then(() => {
       statusText.textContent = "Scanning your face...";
     })
     .catch(err => {
-      console.error('Error accessing camera:', err);
-      statusText.textContent = "Camera access denied or unavailable.";
+      console.error('Error accessing camera or playing video:', err);
+      if (facingMode) {
+        // Try without facingMode as fallback
+        startCamera();
+      } else {
+        statusText.textContent = "Camera access denied or autoplay blocked. Please refresh and allow camera.";
+      }
     });
 }
 
