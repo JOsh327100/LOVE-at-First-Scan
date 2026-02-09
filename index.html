@@ -103,34 +103,12 @@ video {
   width: 100%;
   border-radius: 25px;
   border: 4px solid white;
-  transition: border-color 0.3s;
-}
-
-video.locked {
-  border-color: #00ff00;
 }
 
 canvas {
   position: absolute;
   top: 0;
   left: 0;
-}
-
-/* Animated Scanning Line */
-.scanning-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #00ffcc, transparent);
-  animation: scan 2s linear infinite;
-  z-index: 2;
-}
-
-@keyframes scan {
-  0% { top: 0; }
-  100% { top: 100%; }
 }
 
 #status {
@@ -262,7 +240,6 @@ canvas {
   <div class="container">
     <video id="video" autoplay muted></video>
     <canvas id="overlay"></canvas>
-    <div class="scanning-line"></div>
   </div>
 
   <p id="result"></p>
@@ -294,19 +271,7 @@ const quotes = [
   "A perfect match in the moment 💞"
 ];
 
-function isPhone() {
-  const ua = navigator.userAgent;
-  if (ua.indexOf('iPad') > -1) return false;
-  if (ua.indexOf('Tablet') > -1) return false;
-  return /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || window.innerWidth < 768;
-}
 
-window.addEventListener('load', () => {
-  if (isPhone()) {
-    instructionModal.classList.add('hidden');
-    blockedModal.classList.remove('hidden');
-  }
-});
 
 function openGuide() {
   instructionModal.classList.add("hidden");
