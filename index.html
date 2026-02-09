@@ -296,22 +296,13 @@ const quotes = [
   "A perfect match in the moment 💞"
 ];
 
-// Device check and modal display on page load
+// Preload models on page load for faster camera appearance
 window.addEventListener('load', async () => {
   try {
     await loadModels();
     modelsLoaded = true;
   } catch (error) {
     console.error('Failed to load models:', error);
-  }
-
-  // Check device type
-  if (window.innerWidth < 768) {
-    // Phone: show blocked modal
-    document.getElementById('blockedModal').classList.remove('hidden');
-  } else {
-    // Tablet/iPad: show instructions modal
-    document.getElementById('instructionModal').classList.remove('hidden');
   }
 });
 
@@ -547,22 +538,27 @@ function showResults() {
 
 function closeResultsModal() {
   document.getElementById('resultsModal').classList.add('hidden');
-  // Hide scan area and go back to instructions
   scanArea.classList.add('hidden');
-  // Stop camera if running
+  instructionModal.classList.remove('hidden');
+  // Stop camera
   if (video.srcObject) {
     video.srcObject.getTracks().forEach(track => track.stop());
   }
   // Reset variables
   userCaptured = false;
   resultShown = false;
-  userFaceImage = null;
+  scanningForMatch = false;
   partnerImages = [];
-  capturingPartners = false;
-  // Show instructions modal
-  document.getElementById('instructionModal').classList.remove('hidden');
+  resultText.textContent = "";
+  quoteText.textContent = "";
+  statusText.textContent = "Initializing camera...";
+  // Hide buttons
+  document.getElementById('captureBtn').style.display = 'inline-block';
+  document.getElementById('capturePartnerBtn').style.display = 'none';
+  document.getElementById('doneBtn').style.display = 'none';
 }
 </script>
 
 </body>
 </html>
+
