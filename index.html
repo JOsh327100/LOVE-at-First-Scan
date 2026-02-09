@@ -242,6 +242,16 @@ canvas {
   </div>
 </div>
 
+<!-- RESULTS MODAL -->
+<div id="resultsModal" class="modal hidden">
+  <div class="modal-content results-modal">
+    <h2>💕 Love Results 💕</h2>
+    <div id="resultsContent"></div>
+    <p id="resultsQuote"></p>
+    <button onclick="closeResultsModal()">✨ Close</button>
+  </div>
+</div>
+
 <!-- MAIN APP -->
 <div id="scanArea" class="hidden">
   <p id="status">Initializing camera...</p>
@@ -504,21 +514,32 @@ function showResults() {
   document.getElementById('capturePartnerBtn').style.display = 'none';
   document.getElementById('doneBtn').style.display = 'none';
 
-  // Display results
-  resultText.textContent = "";
-  quoteText.textContent = "";
+  // Clear previous results
+  const resultsContent = document.getElementById('resultsContent');
+  const resultsQuote = document.getElementById('resultsQuote');
+  resultsContent.innerHTML = "";
+  resultsQuote.textContent = "";
 
+  // Generate and display results
   partnerImages.forEach((partnerImage, index) => {
     const percentage = Math.floor(Math.random() * 41) + 60; // Random 60-100%
     const resultDiv = document.createElement('div');
     resultDiv.innerHTML = `<p>Partner ${index + 1}: 💖 ${percentage}% Connected</p>`;
-    resultText.appendChild(resultDiv);
+    resultsContent.appendChild(resultDiv);
   });
 
   const quote = quotes[Math.floor(Math.random() * quotes.length)];
-  quoteText.textContent = quote;
+  resultsQuote.textContent = quote;
 
+  // Show results modal
+  document.getElementById('resultsModal').classList.remove('hidden');
   statusText.textContent = "Results calculated!";
+}
+
+function closeResultsModal() {
+  document.getElementById('resultsModal').classList.add('hidden');
+  // Reset for new scan
+  resetScan();
 }
 </script>
 
