@@ -296,13 +296,22 @@ const quotes = [
   "A perfect match in the moment 💞"
 ];
 
-// Preload models on page load for faster camera appearance
+// Device check and modal display on page load
 window.addEventListener('load', async () => {
   try {
     await loadModels();
     modelsLoaded = true;
   } catch (error) {
     console.error('Failed to load models:', error);
+  }
+
+  // Check device type
+  if (window.innerWidth < 768) {
+    // Phone: show blocked modal
+    document.getElementById('blockedModal').classList.remove('hidden');
+  } else {
+    // Tablet/iPad: show instructions modal
+    document.getElementById('instructionModal').classList.remove('hidden');
   }
 });
 
@@ -538,8 +547,20 @@ function showResults() {
 
 function closeResultsModal() {
   document.getElementById('resultsModal').classList.add('hidden');
-  // Reset for new scan
-  resetScan();
+  // Hide scan area and go back to instructions
+  scanArea.classList.add('hidden');
+  // Stop camera if running
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(track => track.stop());
+  }
+  // Reset variables
+  userCaptured = false;
+  resultShown = false;
+  userFaceImage = null;
+  partnerImages = [];
+  capturingPartners = false;
+  // Show instructions modal
+  document.getElementById('instructionModal').classList.remove('hidden');
 }
 </script>
 
