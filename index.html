@@ -273,6 +273,7 @@ let resultShown = false;
 let intervalId;
 let userFaceImage = null;
 let scanningForMatch = false;
+let modelsLoaded = false;
 
 const quotes = [
   "Love begins with a smile 💖",
@@ -281,6 +282,16 @@ const quotes = [
   "Love found its way 💘",
   "A perfect match in the moment 💞"
 ];
+
+// Preload models on page load for faster camera appearance
+window.addEventListener('load', async () => {
+  try {
+    await loadModels();
+    modelsLoaded = true;
+  } catch (error) {
+    console.error('Failed to load models:', error);
+  }
+});
 
 
 
@@ -303,7 +314,9 @@ async function confirmCamera() {
 async function startApp() {
   scanArea.classList.remove("hidden");
   music.play();
-  await loadModels();
+  if (!modelsLoaded) {
+    await loadModels();
+  }
   startCamera('user'); // Start with front camera for user face
 }
 
