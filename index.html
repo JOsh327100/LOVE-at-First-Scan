@@ -186,7 +186,7 @@ canvas {
 
 <body>
 
-<h1>❤️ LOVE at First Scan</h1>
+<h1>❤️ LOVE at First Capture</h1>
 
 <!-- 🎵 MUSIC -->
 <audio id="bgMusic" loop>
@@ -523,13 +523,11 @@ function showResults() {
   // Generate and display results
   partnerImages.forEach((partnerImage, index) => {
     const percentage = Math.floor(Math.random() * 41) + 60; // Random 60-100%
+    const quote = quotes[Math.floor(Math.random() * quotes.length)];
     const resultDiv = document.createElement('div');
-    resultDiv.innerHTML = `<p>Partner ${index + 1}: 💖 ${percentage}% Connected</p>`;
+    resultDiv.innerHTML = `<p>Partner ${index + 1}: 💖 ${percentage}% Connected</p><p style="font-style: italic; margin-top: 5px;">${quote}</p>`;
     resultsContent.appendChild(resultDiv);
   });
-
-  const quote = quotes[Math.floor(Math.random() * quotes.length)];
-  resultsQuote.textContent = quote;
 
   // Show results modal
   document.getElementById('resultsModal').classList.remove('hidden');
