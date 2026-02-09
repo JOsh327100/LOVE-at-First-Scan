@@ -253,6 +253,8 @@ canvas {
 
   <div class="app-footer">
     <button id="captureBtn" onclick="captureUserFace()">📸 Capture My Face</button>
+    <button id="capturePartnerBtn" onclick="capturePartnerFace()" style="display:none;">👫 Capture Partner</button>
+    <button id="doneBtn" onclick="showResults()" style="display:none;">✅ Done</button>
     <button onclick="resetScan()">🔄 Reset Scan</button>
   </div>
 
@@ -272,7 +274,8 @@ let userCaptured = false;
 let resultShown = false;
 let intervalId;
 let userFaceImage = null;
-let scanningForMatch = false;
+let partnerImages = [];
+let capturingPartners = false;
 let modelsLoaded = false;
 
 const quotes = [
@@ -455,20 +458,67 @@ function captureUserFace() {
   playBeep();
   statusText.textContent = "Face captured. Switching to back camera...";
 
-  // Switch to back camera for scanning surroundings
+  // Switch to back camera for capturing partners
   switchToBackCamera();
 
-  // Start scanning for match after a short delay to allow camera switch
+  // Show partner capture buttons after camera switch
   setTimeout(() => {
-    scanningForMatch = true;
     userCaptured = true;
-    statusText.textContent = "Scanning surroundings...";
+    capturingPartners = true;
+    statusText.textContent = "Capture partners by clicking 'Capture Partner' or click 'Done' when finished.";
+    document.getElementById('captureBtn').style.display = 'none';
+    document.getElementById('capturePartnerBtn').style.display = 'inline-block';
+    document.getElementById('doneBtn').style.display = 'inline-block';
   }, 1000); // 1 second delay
 
-  // Hide capture button
-  document.getElementById('captureBtn').style.display = 'none';
+  console.log('User face captured successfully');
+}
 
-  console.log('Face captured successfully');
+function capturePartnerFace() {
+  // Ensure video is ready
+  if (video.videoWidth === 0 || video.videoHeight === 0) {
+    statusText.textContent = "Camera not ready. Please wait...";
+    return;
+  }
+
+  // Capture partner face image
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const partnerImage = canvas.toDataURL('image/png');
+  partnerImages.push(partnerImage);
+
+  // Beep for capture
+  playBeep();
+  statusText.textContent = `Partner ${partnerImages.length} captured. Capture more or click 'Done'.`;
+
+  console.log(`Partner ${partnerImages.length} captured successfully`);
+}
+
+function showResults() {
+  if (partnerImages.length === 0) {
+    statusText.textContent = "No partners captured. Please capture at least one partner.";
+    return;
+  }
+
+  // Hide buttons
+  document.getElementById('capturePartnerBtn').style.display = 'none';
+  document.getElementById('doneBtn').style.display = 'none';
+
+  // Display results
+  resultText.textContent = "";
+  quoteText.textContent = "";
+
+  partnerImages.forEach((partnerImage, index) => {
+    const percentage = Math.floor(Math.random() * 41) + 60; // Random 60-100%
+    const resultDiv = document.createElement('div');
+    resultDiv.innerHTML = `<p>Partner ${index + 1}: 💖 ${percentage}% Connected</p>`;
+    resultText.appendChild(resultDiv);
+  });
+
+  const quote = quotes[Math.floor(Math.random() * quotes.length)];
+  quoteText.textContent = quote;
+
+  statusText.textContent = "Results calculated!";
 }
 </script>
 
