@@ -286,20 +286,42 @@ function startApp() {
   scanArea.classList.remove("hidden");
   music.play();
   loadModels();
+  startCamera('user'); // Start with front camera for user face
 }
 
 function loadModels() {
   Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri("https://unpkg.com/face-api.js/models")
-  ]).then(startCamera);
+  ]).then(() => {
+    // Models loaded, camera will be started in startApp
+  });
 }
 
-function startCamera() {
-  navigator.mediaDevices.getUserMedia({ video: true })
+function startCamera(facingMode = 'user') {
+  const constraints = {
+    video: {
+      facingMode: facingMode
+    }
+  };
+  navigator.mediaDevices.getUserMedia(constraints)
     .then(stream => {
       video.srcObject = stream;
       statusText.textContent = "Scanning your face...";
+    })
+    .catch(err => {
+      console.error('Error accessing camera:', err);
+      statusText.textContent = "Camera access denied or unavailable.";
     });
+}
+
+function switchToBackCamera() {
+  // Stop current stream
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(track => track.stop());
+  }
+  // Start back camera
+  startCamera('environment');
+  statusText.textContent = "Switching to back camera...";
 }
 
 video.addEventListener("play", () => {
@@ -373,6 +395,8 @@ function resetScan() {
   video.classList.remove('locked');
   resultText.textContent = "";
   quoteText.textContent = "";
+  // Switch back to front camera
+  startCamera('user');
   statusText.textContent = "Scanning your face...";
   // Show capture button
   document.getElementById('captureBtn').style.display = 'inline-block';
@@ -393,11 +417,17 @@ function captureUserFace() {
   // Add green lock frame and beep
   video.classList.add('locked');
   playBeep();
-  statusText.textContent = "Face captured. Scanning surroundings...";
+  statusText.textContent = "Face captured. Switching to back camera...";
 
-  // Start scanning for match
-  scanningForMatch = true;
-  userCaptured = true;
+  // Switch to back camera for scanning surroundings
+  switchToBackCamera();
+
+  // Start scanning for match after a short delay to allow camera switch
+  setTimeout(() => {
+    scanningForMatch = true;
+    userCaptured = true;
+    statusText.textContent = "Scanning surroundings...";
+  }, 1000); // 1 second delay
 
   // Hide capture button
   document.getElementById('captureBtn').style.display = 'none';
